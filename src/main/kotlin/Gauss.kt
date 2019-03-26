@@ -44,7 +44,7 @@ fun <T> deepAnalysis(
         return prev to operation(prev)
     }
     if (inStart) {
-        for (j in (prev.max() ?: -1) + 1..maxValue) {
+        for (j in ((prev.max() ?: -1) + 1)..maxValue) {
             deepAnalysis(prev + j, maxValue, maxDeep, inStart, operation).let {
                 if (it.second != null) {
                     return it
@@ -66,7 +66,7 @@ fun <T> deepAnalysis(
 private fun Matrix.shiftTo(set: Set<Int>, inStart: Boolean = true): Matrix {
     var ans = copy()
     if (inStart) {
-        set.reversed().forEachIndexed { index, i ->
+        set.forEachIndexed { index, i ->
             ans = ans.swapColons(index, i)
         }
     } else {
@@ -87,10 +87,11 @@ fun Matrix.diagonaliseWithSwap(inStart: Boolean = true): Pair<Set<Int>, Matrix> 
 }
 
 fun createGbyH(H: Matrix): Matrix {
+    assert(H.m == H[0].size && H.inner.size == H.n)
     val (set, diagonalizedP) = H.diagonaliseWithSwap(false)
     printlnd()
     printlnd(diagonalizedP)
-    val Pt = diagonalizedP.sliceByLines(last = H.m - H.n).transpose()
+    val Pt = diagonalizedP.sliceByLines(0, H.m - H.n).transpose()
     printlnd()
     printlnd(Pt)
     val IPt = Pt.addIinHead()
@@ -101,12 +102,15 @@ fun createGbyH(H: Matrix): Matrix {
 }
 
 fun createHbyG(G: Matrix): Matrix {
-    val (set, diagonalizedP) = G.diagonaliseWithSwap()
+    assert(G.inner.size == G.n)
+    assert(G.m == G[0].size)
+    val (set, diagonalizedG) = G.diagonaliseWithSwap()
     printlnd()
-    printlnd(diagonalizedP)
-    val Pt = diagonalizedP.sliceByLines(first = G.m - G.n).transpose()
+    printlnd("diagonalized G: \n $diagonalizedG")
+    val P = diagonalizedG.sliceByLines(G.n, G.m)
+    val Pt = P.transpose()
     printlnd()
-    printlnd(Pt)
+    printlnd("Pt is $Pt")
     val IPt = Pt.addIInTail()
     printlnd()
     printlnd(IPt)
@@ -116,6 +120,6 @@ fun createHbyG(G: Matrix): Matrix {
 
 fun testGisCorrectForH(G: Matrix, H: Matrix): Boolean {
     val ans = G * (H.transpose())
-    println(ans)
+//    println(ans)
     return ans.inner.all { it.isZero() }
 }

@@ -5,7 +5,7 @@
 
 typealias Vec = List<Int>
 
-const val DEBUG = true
+const val DEBUG = false
 
 fun printlnd(any: Any? = "") {
     if (DEBUG) {
@@ -16,7 +16,7 @@ fun printlnd(any: Any? = "") {
 class Coding(val H: Matrix) {
     val n get() = H.m
     val k get() = H.m - H.n
-    val speed get() = n.toDouble() / k
+    val speed get() = k / n.toDouble()
 
     val G by lazy {
         createGbyH(H).apply {
@@ -34,6 +34,14 @@ class Coding(val H: Matrix) {
                 printlnd(it.joinToString())
             }
         }
+    }
+    val spectrum by lazy {
+        printlnd("Spectrum is")
+        words.groupBy {
+            it.sum()
+        }.map { (d, words) ->
+            d to words.size
+        }.sortedBy{ it.first }
     }
 
     val d by lazy {
@@ -59,7 +67,22 @@ class Coding(val H: Matrix) {
     }
 
     val syndromeTable by lazy {
-        createSyndromeTable(genAllOnceErrors())
+        createAllSyndromes()
+    }
+
+    private fun createAllSyndromes(): Map<Vec, Vec> {
+        val table = mutableMapOf<Vec, Vec>()
+        val vectors = genAllVectors(H.m)
+        vectors.forEach { error ->
+            val syndrome = error * H.transpose()
+            if (!syndrome.isZero()) {
+                val prev = table[syndrome.toList()]
+                if (prev == null || prev.sum() > error.sum()) {
+                    table[syndrome.toList()] = error.toList()
+                }
+            }
+        }
+        return table
     }
 
     private fun createSyndromeTable(errors: Collection<Vector>): Map<Vec, Vec> {

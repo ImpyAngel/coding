@@ -9,13 +9,13 @@ import com.mxgraph.swing.mxGraphComponent
 
 data class Span(val first: Int, val last: Int, val index: Int)
 
-typealias Edge = Pair<Int, String>
+typealias Edge = Pair<Int, Boolean>
 
 typealias Edges = List<Edge>
 
 fun List<Span>.toComplexityProfile(): List<Int> = List(size) { index ->
     this.filter {
-        it.first >= index && it.last <= index
+        it.first <= index && it.last >= index
     }.size
 }
 
@@ -52,12 +52,12 @@ class Grid(val strangeMode: Boolean = false) {
             graph.model.beginUpdate()
             try {
                 var maxY = 0
-                var preves = listOf<Pair<Any, List<Pair<Int, String>>>>()
+                var preves = listOf<Pair<Any, Edges>>()
                 tiers.forEachIndexed { xIndex, namedTier ->
                     val x = xIndex * (xNode + xSpace)
                     val (tier, name) = namedTier
                     if (name != "") graph.insertVertex(parent, null, name, x, 0.0, xNode, yNode)
-                    val thisTier = mutableListOf<Pair<Any, List<Pair<Int, String>>>>()
+                    val thisTier = mutableListOf<Pair<Any, Edges>>()
                     if (tier.size > maxY) maxY = tier.size
                     tier.forEachIndexed { yIndex, rowV ->
                         var y = yIndex * (yNode + ySpace) + ySpan
@@ -81,7 +81,7 @@ class Grid(val strangeMode: Boolean = false) {
                     }
                     preves.forEach { (v, nexts) ->
                         nexts.forEach { (u, edge) ->
-                            graph.insertEdge(parent, null, edge, v, thisTier[u].first)
+                            graph.insertEdge(parent, null, if (edge) 1 else 0, v, thisTier[u].first)
                         }
                     }
                     preves = thisTier
@@ -138,7 +138,7 @@ class Grid(val strangeMode: Boolean = false) {
                     val intersect = prevList.intersect(curList)
                     if (intersect.size == prevList.size - deleted) {
                         val union = prevList.union(curList).filter { it.second == 1 }.map { it.first }
-                        links.add(curNode.index to matrix.getColumn(i).partialSum(union).toString())
+                        links.add(curNode.index to (matrix.getColumn(i).partialSum(union) % 2 == 1))
                     }
                 }
                 prevNode.links = links
@@ -161,12 +161,12 @@ class Grid(val strangeMode: Boolean = false) {
             val line = Ht[i]
             val curTier = prevTier.toMutableList()
             tiers.add(Tier(prevTier.mapIndexed { index, value ->
-                val links = mutableListOf(Edge(index, "0"))
+                val links = mutableListOf(Edge(index, false))
                 val ifAdd = value + line
                 if (!curTier.contains(ifAdd)) {
                     curTier += ifAdd
                 }
-                links += curTier.indexOf(ifAdd) to "1"
+                links += curTier.indexOf(ifAdd) to true
                 Node(value.joinToString(separator = ""), index, links)
             }))
             prevTier = curTier
@@ -190,7 +190,5 @@ class Grid(val strangeMode: Boolean = false) {
             }
         }
         printlnd("Tier after remove: \n $tiers")
-
-
     }
 }

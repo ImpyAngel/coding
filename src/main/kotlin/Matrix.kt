@@ -54,9 +54,12 @@ data class Matrix(var n: Int, var m: Int, val inner: Array<Vector> = Array(n) { 
         return transpose().swapLines(v, u).transpose()
     }
 
+    // [first, last)
+    // 0 1 [|2 3 4| 5) 6
     fun sliceByLines(first: Int = 0, last: Int = m): Matrix {
         val newM = last - first
-        return Matrix(n, newM, Array(n) { i -> IntArray(newM) { j -> inner[i][j + first] } })
+        val prevInner = inner
+        return Matrix(n, newM, Array(n) { i -> IntArray(newM) { j -> prevInner[i][j + first] } })
     }
 
     fun sliceOnTwoMatrix(headOfSecond: Int): Pair<Matrix, Matrix> {
